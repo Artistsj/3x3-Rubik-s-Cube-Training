@@ -3,5 +3,6 @@
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to = "/pll_trainer.html"
+
   status = 200
