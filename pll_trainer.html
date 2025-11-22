@@ -1,1298 +1,1795 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PLL 6格识别训练器 - 优化版</title>
+    <title>PLL 6格观察法训练器</title>
     <style>
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
-
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        line-height: 1.6;
-        color: #333;
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        min-height: 100vh;
-        padding: 15px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .container {
-        width: 100%;
-        max-width: 1100px;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-      }
-
-      header {
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        color: white;
-        padding: 20px;
-        text-align: center;
-      }
-
-      h1 {
-        font-size: 1.8rem;
-        margin-bottom: 5px;
-      }
-
-      .subtitle {
-        font-size: 0.9rem;
-        opacity: 0.9;
-      }
-
-      .main-content {
-        padding: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      .start-screen {
-        text-align: center;
-        padding: 30px;
-      }
-
-      .test-options {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin: 20px 0;
-        flex-wrap: wrap;
-      }
-
-      .test-option {
-        padding: 15px 25px;
-        background: #f8f9fa;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border: 2px solid #dee2e6;
-        min-width: 120px;
-      }
-
-      .test-option:hover {
-        background: #e9ecef;
-        transform: translateY(-3px);
-      }
-
-      .test-option.selected {
-        background: #6a11cb;
-        color: white;
-        border-color: #6a11cb;
-      }
-
-      .test-info {
-        margin-top: 20px;
-        color: #6c757d;
-        font-size: 0.9rem;
-      }
-
-      .top-section {
-        display: flex;
-        gap: 20px;
-        align-items: flex-start;
-      }
-
-      .image-container {
-        flex: 1;
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        text-align: center;
-        border: 2px dashed #dee2e6;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 300px;
-      }
-
-      #pllImage {
-        max-width: 100%;
-        max-height: 250px;
-        border-radius: 8px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      }
-
-      .info-panel {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-      }
-
-      .attempts {
-        text-align: center;
-        padding: 10px;
-        background: #e9ecef;
-        border-radius: 8px;
-        color: #6c757d;
-        font-weight: bold;
-      }
-
-      #answer {
-        font-size: 1.5rem;
-        font-weight: bold;
-        text-align: center;
-        padding: 15px;
-        border-radius: 10px;
-        background: #e9ecef;
-        transition: all 0.3s ease;
-        min-height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .answer-visible {
-        background: #d4edda !important;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-      }
-
-      .answer-wrong {
-        background: #f8d7da !important;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-
-      .time-display {
-        text-align: center;
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #6a11cb;
-      }
-
-      .options-container {
-        display: grid;
-        grid-template-columns: repeat(7, 1fr);
-        gap: 8px;
-        margin-top: 10px;
-      }
-
-      .option-btn {
-        padding: 10px 5px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        border: 2px solid #dee2e6;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: white;
-        color: #333;
-      }
-
-      .option-btn:hover {
-        background: #e9ecef;
-        transform: translateY(-2px);
-      }
-
-      .option-btn.correct {
-        background: #28a745;
-        color: white;
-        border-color: #28a745;
-      }
-
-      .option-btn.wrong {
-        background: #dc3545;
-        color: white;
-        border-color: #dc3545;
-      }
-
-      .option-btn.disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      .controls {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 10px;
-      }
-
-      button {
-        padding: 10px 25px;
-        font-size: 1rem;
-        font-weight: 600;
-        border: none;
-        border-radius: 50px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      #startTest {
-        background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
-        color: white;
-      }
-
-      #pauseTest {
-        background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-        color: white;
-      }
-
-      #endTest {
-        background: linear-gradient(135deg, #ff6b6b 0%, #ffa8a8 100%);
-        color: white;
-      }
-
-      #resumeTest {
-        background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
-        color: white;
-        margin-top: 15px;
-      }
-
-      button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 7px 10px rgba(0, 0, 0, 0.15);
-      }
-
-      button:active {
-        transform: translateY(1px);
-      }
-
-      .stats {
-        display: flex;
-        justify-content: space-around;
-        background: #f8f9fa;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 10px;
-        text-align: center;
-      }
-
-      .stat-item {
-        flex: 1;
-      }
-
-      .stat-value {
-        font-size: 1.5rem;
-        font-weight: bold;
-        color: #6a11cb;
-      }
-
-      .stat-label {
-        font-size: 0.9rem;
-        color: #6c757d;
-      }
-
-      .reference-data {
-        background: #e9ecef;
-        padding: 15px;
-        border-radius: 10px;
-        margin-top: 15px;
-      }
-
-      .reference-data h3 {
-        margin-bottom: 10px;
-        color: #6a11cb;
-      }
-
-      .reference-item {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 5px;
-      }
-
-      .report-screen {
-        padding: 20px;
-        text-align: center;
-      }
-
-      .report-title {
-        font-size: 1.8rem;
-        margin-bottom: 20px;
-        color: #6a11cb;
-      }
-
-      .report-summary {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-      }
-
-      .accuracy-note {
-        font-size: 0.9rem;
-        color: #6c757d;
-        margin-top: 10px;
-        font-style: italic;
-      }
-
-      .report-details {
-        text-align: left;
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        max-height: 400px;
-        overflow-y: auto;
-      }
-
-      .question-result {
-        margin-bottom: 15px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #dee2e6;
-      }
-
-      .question-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-
-      .attempt-details {
-        margin-left: 10px;
-        font-size: 0.9rem;
-        color: #6c757d;
-      }
-
-      .attempt-item {
-        display: flex;
-        justify-content: space-between;
-        padding: 5px 0;
-        border-bottom: 1px dashed #e9ecef;
-      }
-
-      .wrong-image-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 10px;
-      }
-
-      .wrong-image {
-        max-width: 150px;
-        max-height: 150px;
-        border-radius: 8px;
-        border: 1px solid #ddd;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-      }
-
-      .comparison {
-        background: #e9ecef;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-      }
-
-      .report-controls {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 20px;
-      }
-
-      #wrongQuestionsTrain {
-        background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-        color: white;
-      }
-
-      footer {
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        color: #6c757d;
-        font-size: 0.9rem;
-      }
-
-      @media (max-width: 768px) {
-        .top-section {
-          flex-direction: column;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .options-container {
-          grid-template-columns: repeat(4, 1fr);
+        body {
+            font-family: "Microsoft YaHei", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .image-container {
-          min-height: 250px;
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
         }
 
-        #pllImage {
-          max-height: 200px;
+        header {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .training-modes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .mode-section {
+            flex: 1;
+            min-width: 300px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid #dee2e6;
+        }
+
+        .mode-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6a11cb;
+            margin-bottom: 15px;
+            text-align: center;
         }
 
         .test-options {
-          flex-direction: column;
-          align-items: center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
         }
-      }
 
-      @media (max-width: 480px) {
-        .options-container {
-          grid-template-columns: repeat(3, 1fr);
+        .test-option {
+            padding: 10px 15px;
+            background: #e9ecef;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #dee2e6;
+            flex: 1;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .test-option:hover {
+            background: #dee2e6;
+        }
+
+        .test-option.selected {
+            background: #6a11cb;
+            color: white;
+            border-color: #6a11cb;
+        }
+
+        .mode-description {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+
+        .custom-selection {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .formula-option {
+            padding: 8px 5px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #dee2e6;
+            text-align: center;
+        }
+
+        .formula-option:hover {
+            background: #dee2e6;
+        }
+
+        .formula-option.selected {
+            background: #6a11cb;
+            color: white;
+            border-color: #6a11cb;
+        }
+
+        .custom-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .color-selection {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .color-option {
+            padding: 5px 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #dee2e6;
+        }
+
+        .color-option.selected {
+            background: #6a11cb;
+            color: white;
+            border-color: #6a11cb;
+        }
+
+        .times-selection {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #timesInput {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .start-button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #startTest {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .reference-data {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .reference-data h3 {
+            margin-bottom: 10px;
+            color: #6a11cb;
+        }
+
+        .reference-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        /* 测试界面样式 */
+        .test-screen {
+            padding: 20px;
+        }
+
+        .top-section {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 20px;
         }
 
         .image-container {
-          min-height: 200px;
+            flex: 1;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 2px dashed #dee2e6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
         }
 
         #pllImage {
-          max-height: 150px;
+            max-width: 100%;
+            max-height: 250px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .attempts {
+            text-align: center;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 8px;
+            color: #6c757d;
+            font-weight: bold;
+        }
+
+        #answer {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: #e9ecef;
+            transition: all 0.3s ease;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .answer-visible {
+            background: #d4edda !important;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .answer-wrong {
+            background: #f8d7da !important;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .time-display {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6a11cb;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 10px 5px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            color: #333;
+        }
+
+        .option-btn:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background: #28a745;
+            color: white;
+            border-color: #28a745;
+        }
+
+        .option-btn.wrong {
+            background: #dc3545;
+            color: white;
+            border-color: #dc3545;
+        }
+
+        .option-btn.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        #pauseTest {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        #endTest {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa8a8 100%);
+            color: white;
         }
 
         .stats {
-          flex-direction: column;
-          gap: 10px;
+            display: flex;
+            justify-content: space-around;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+            text-align: center;
         }
-      }
 
-      .hidden {
-        display: none !important;
-      }
+        .stat-item {
+            flex: 1;
+        }
 
-      .paused-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.7);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 100;
-        border-radius: 15px;
-      }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6a11cb;
+        }
 
-      .paused-message {
-        background: white;
-        padding: 30px;
-        border-radius: 10px;
-        text-align: center;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      }
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
 
-      .paused-message h2 {
-        color: #6a11cb;
-        margin-bottom: 15px;
-      }
+        /* 报告界面样式 */
+        .report-screen {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .report-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #6a11cb;
+        }
+
+        .report-summary {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .accuracy-note {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
+        .report-details {
+            text-align: left;
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .question-result {
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .attempt-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px dashed #e9ecef;
+        }
+
+        .wrong-image-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .wrong-image {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .comparison {
+            background: #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .report-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        #wrongQuestionsTrain {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            color: white;
+        }
+
+        #restartTest {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .paused-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 15px;
+        }
+
+        .paused-message {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .paused-message h2 {
+            color: #6a11cb;
+            margin-bottom: 15px;
+        }
+
+        #resumeTest {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+            margin-top: 15px;
+        }
+
+        .loading-spinner {
+            padding: 20px;
+            text-align: center;
+            color: #6a11cb;
+            font-weight: bold;
+        }
+
+        /* 加载动画 */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-spinner::before {
+            content: "";
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #6a11cb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .training-modes {
+                flex-direction: column;
+            }
+            
+            .top-section {
+                flex-direction: column;
+            }
+
+            .options-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+
+            .image-container {
+                min-height: 250px;
+            }
+
+            #pllImage {
+                max-height: 200px;
+            }
+
+            .custom-selection {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .options-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .image-container {
+                min-height: 200px;
+            }
+
+            #pllImage {
+                max-height: 150px;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .custom-selection {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="container">
-      <header>
-        <h1>PLL 6 格 观 察 法 训 练 器</h1>
-        <p class="subtitle">
-          通过6格颜色图案识别魔方PLL公式 - 带题量选择和详细报告
-        </p>
-      </header>
+        <header>
+            <h1>PLL 6 格 观 察 法 训 练 器</h1>
+            <p class="subtitle">通过6格颜色图案识别魔方PLL公式 - 带题量选择和详细报告</p>
+        </header>
 
-      <!-- 开始界面 -->
-      <div class="start-screen" id="startScreen">
-        <h2>选择题量</h2>
-        <div class="test-options">
-          <div class="test-option" data-count="10">10道题</div>
-          <div class="test-option" data-count="20">20道题</div>
-          <div class="test-option" data-count="30">30道题</div>
-          <div class="test-option" data-count="21">21道题（每个公式一次）</div>
-        </div>
-        <div class="test-info">
-          <p>选择后点击开始测试</p>
-          <p>21道题模式：每个PLL公式出现一次，随机选择4种方向之一</p>
-        </div>
-        <button id="startTest">开始测试</button>
+        <!-- 开始界面 -->
+        <div class="main-content" id="startScreen">
+            <div class="training-modes">
+                <!-- 初级版训练 -->
+                <div class="mode-section">
+                    <div class="mode-title">初级版训练</div>
+                    <div class="test-options">
+                        <div class="test-option" data-mode="basic" data-count="10">10题</div>
+                        <div class="test-option" data-mode="basic" data-count="20">20题</div>
+                        <div class="test-option" data-mode="basic" data-count="30">30题</div>
+                        <div class="test-option" data-mode="basic" data-count="21">21题（每个公式1次）</div>
+                        <div class="test-option" data-mode="basic" data-count="42">42题（每个公式2次）</div>
+                    </div>
+                    <div class="mode-description">
+                        初级版训练：4面随机生成，但只有1种颜色
+                    </div>
+                </div>
 
-        <div class="reference-data">
-          <h3>参考数据（识别时间）</h3>
-          <div class="reference-item">
-            <span>世界级选手：</span>
-            <span>0.3-0.8秒</span>
-          </div>
-          <div class="reference-item">
-            <span>Sub-10选手：</span>
-            <span>0.5-1.2秒</span>
-          </div>
-          <div class="reference-item">
-            <span>Sub-15选手：</span>
-            <span>0.8-1.8秒</span>
-          </div>
-          <div class="reference-item">
-            <span>备注：</span>
-            <span>网页点击时间约0.2-0.4秒</span>
-          </div>
-        </div>
-      </div>
+                <!-- 进阶版训练 -->
+                <div class="mode-section">
+                    <div class="mode-title">进阶版训练</div>
+                    <div class="test-options">
+                        <div class="test-option" data-mode="advanced" data-count="10">10题</div>
+                        <div class="test-option" data-mode="advanced" data-count="20">20题</div>
+                        <div class="test-option" data-mode="advanced" data-count="30">30题</div>
+                        <div class="test-option" data-mode="advanced" data-count="21">21题（每个公式1次）</div>
+                        <div class="test-option" data-mode="advanced" data-count="42">42题（每个公式2次）</div>
+                    </div>
+                    <div class="mode-description">
+                        进阶版训练：4面随机生成，且有4种颜色，共16种情况
+                    </div>
+                </div>
 
-      <!-- 测试界面 -->
-      <div class="main-content hidden" id="testScreen">
-        <div id="pausedOverlay" class="paused-overlay hidden">
-          <div class="paused-message">
-            <h2>测试已暂停</h2>
-            <p>点击"继续"按钮或按空格键恢复测试</p>
-            <button id="resumeTest">继续</button>
-          </div>
-        </div>
-
-        <div class="top-section">
-          <div class="image-container">
-            <img id="pllImage" src="" alt="PLL图案" />
-          </div>
-
-          <div class="info-panel">
-            <div class="attempts">
-              剩余尝试次数: <span id="attemptsLeft">3</span>
+                <!-- 个性化训练 -->
+                <div class="mode-section">
+                    <div class="mode-title">个性化训练</div>
+                    <div class="custom-selection" id="formulaSelection">
+                        <!-- 公式选项将通过JavaScript动态生成 -->
+                    </div>
+                    <div class="custom-controls">
+                        <div class="color-selection">
+                            <span>颜色选择：</span>
+                            <div class="color-option selected" data-colors="1">1种颜色</div>
+                            <div class="color-option" data-colors="4">4种颜色</div>
+                        </div>
+                        <div class="times-selection">
+                            <span>选择次数：</span>
+                            <input type="number" id="timesInput" min="1" max="9" value="1">
+                            <button id="confirmSelection">确认选择</button>
+                        </div>
+                    </div>
+                    <div class="mode-description">
+                        个性化：可自定义选择想要训练的公式，且可以选择数量，数量等于每个公式的训练量，系统不会重复相同情况
+                    </div>
+                </div>
             </div>
 
-            <div class="time-display">
-              当前题目用时: <span id="currentTime">0.0</span>秒
+            <div class="start-button-container">
+                <button id="startTest">开始测试</button>
             </div>
 
-            <div id="answer"></div>
-
-            <div class="controls">
-              <button id="pauseTest">暂停</button>
-              <button id="endTest">结束</button>
+            <div class="reference-data">
+                <h3>参考数据（识别时间）</h3>
+                <div class="reference-item">
+                    <span>世界级选手：</span>
+                    <span>0.3-0.8秒</span>
+                </div>
+                <div class="reference-item">
+                    <span>Sub-10选手：</span>
+                    <span>0.5-1.2秒</span>
+                </div>
+                <div class="reference-item">
+                    <span>Sub-15选手：</span>
+                    <span>0.8-1.8秒</span>
+                </div>
+                <div class="reference-item">
+                    <span>备注：</span>
+                    <span>网页点击时间约0.2-0.4秒</span>
+                </div>
             </div>
-          </div>
         </div>
 
-        <div class="options-container" id="optionsContainer">
-          <!-- 选项按钮将通过JavaScript动态生成 -->
+        <!-- 测试界面 -->
+        <div class="test-screen hidden" id="testScreen">
+            <div id="pausedOverlay" class="paused-overlay hidden">
+                <div class="paused-message">
+                    <h2>测试已暂停</h2>
+                    <p>点击"继续"按钮或按空格键恢复测试</p>
+                    <button id="resumeTest">继续</button>
+                </div>
+            </div>
+
+            <div class="top-section">
+                <div class="image-container">
+                    <img id="pllImage" src="" alt="PLL图案" />
+                </div>
+
+                <div class="info-panel">
+                    <div class="attempts">
+                        剩余尝试次数: <span id="attemptsLeft">3</span>
+                    </div>
+
+                    <div class="time-display">
+                        当前题目用时: <span id="currentTime">0.0</span>秒
+                    </div>
+
+                    <div id="answer"></div>
+
+                    <div class="controls">
+                        <button id="pauseTest">暂停</button>
+                        <button id="endTest">结束</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="options-container" id="optionsContainer">
+                <!-- 选项按钮将通过JavaScript动态生成 -->
+            </div>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="practiceCount">0</div>
+                    <div class="stat-label">已练习</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="correctCount">0</div>
+                    <div class="stat-label">一次答对</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="accuracy">0%</div>
+                    <div class="stat-label">一次正确率</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="averageTime">0.0</div>
+                    <div class="stat-label">平均用时(秒)</div>
+                </div>
+            </div>
         </div>
 
-        <div class="stats">
-          <div class="stat-item">
-            <div class="stat-value" id="practiceCount">0</div>
-            <div class="stat-label">已练习</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="correctCount">0</div>
-            <div class="stat-label">一次答对</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="accuracy">0%</div>
-            <div class="stat-label">一次正确率</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value" id="averageTime">0.0</div>
-            <div class="stat-label">平均用时(秒)</div>
-          </div>
-        </div>
-      </div>
+        <!-- 报告界面 -->
+        <div class="report-screen hidden" id="reportScreen">
+            <h2 class="report-title">训练报告</h2>
 
-      <!-- 报告界面 -->
-      <div class="report-screen hidden" id="reportScreen">
-        <h2 class="report-title">训练报告</h2>
+            <div class="report-summary">
+                <h3>训练摘要</h3>
+                <p>总题数: <span id="totalQuestions">0</span></p>
+                <p>一次正确率: <span id="reportAccuracy">0%</span></p>
+                <p>平均识别时间: <span id="reportAverageTime">0.0</span>秒</p>
+                <p>总用时: <span id="totalTime">0.0</span>秒</p>
+                <p class="accuracy-note">
+                    注：一次正确率只统计第一次尝试就答对的题目
+                </p>
+            </div>
 
-        <div class="report-summary">
-          <h3>训练摘要</h3>
-          <p>总题数: <span id="totalQuestions">0</span></p>
-          <p>一次正确率: <span id="reportAccuracy">0%</span></p>
-          <p>平均识别时间: <span id="reportAverageTime">0.0</span>秒</p>
-          <p>总用时: <span id="totalTime">0.0</span>秒</p>
-          <p class="accuracy-note">
-            注：一次正确率只统计第一次尝试就答对的题目
-          </p>
+            <div class="report-details">
+                <h3>每题详细用时</h3>
+                <div id="timeDetails">
+                    <!-- 时间详情将通过JavaScript动态生成 -->
+                </div>
+            </div>
+
+            <div class="comparison">
+                <h3>水平对比</h3>
+                <p id="levelComparison">正在分析您的水平...</p>
+            </div>
+
+            <div class="report-controls">
+                <button id="restartTest">重新开始</button>
+                <button id="wrongQuestionsTrain">错题训练</button>
+            </div>
         </div>
 
-        <div class="report-details">
-          <h3>每题详细用时</h3>
-          <div id="timeDetails">
-            <!-- 时间详情将通过JavaScript动态生成 -->
-          </div>
-        </div>
-
-        <div class="comparison">
-          <h3>水平对比</h3>
-          <p id="levelComparison">正在分析您的水平...</p>
-        </div>
-
-        <div class="report-controls">
-          <button id="restartTest">重新开始</button>
-          <button id="wrongQuestionsTrain">错题训练</button>
-        </div>
-      </div>
-
-      <footer>
-        <p>
-          PLL 6格观察法训练器 &copy; 2025 |
-          专为三阶魔方速拧选手设计（Artist设计）
-        </p>
-      </footer>
+        <footer>
+            <p>PLL 6格观察法训练器 &copy; 2025 | 专为三阶魔方速拧选手设计</p>
+        </footer>
     </div>
 
     <script>
-      // PLL公式列表 - 21个标准PLL公式，按字母顺序排列
-      const pllFormulas = [
-        "Aa",
-        "Ab",
-        "E",
-        "F",
-        "Ga",
-        "Gb",
-        "Gc",
-        "Gd",
-        "H",
-        "J",
-        "L",
-        "Na",
-        "Nb",
-        "Ra",
-        "Rb",
-        "T",
-        "Ua",
-        "Ub",
-        "V",
-        "Y",
-        "Z",
-      ];
-
-      // PLL数据 - 你需要根据实际情况完善这个数组
-      const pllData = [
-        { image: "images/PLL-T-1.PNG", formula: "T" },
-        { image: "images/PLL-T-2.PNG", formula: "T" },
-        { image: "images/PLL-T-3.PNG", formula: "T" },
-        { image: "images/PLL-T-4.PNG", formula: "T" },
-        { image: "images/PLL-Rb-1.PNG", formula: "Rb" },
-        { image: "images/PLL-Rb-2.PNG", formula: "Rb" },
-        { image: "images/PLL-Rb-3.PNG", formula: "Rb" },
-        { image: "images/PLL-Rb-4.PNG", formula: "Rb" },
-        { image: "images/PLL-J-1.PNG", formula: "J" },
-        { image: "images/PLL-J-2.PNG", formula: "J" },
-        { image: "images/PLL-J-3.PNG", formula: "J" },
-        { image: "images/PLL-J-4.PNG", formula: "J" },
-        { image: "images/PLL-F-1.PNG", formula: "F" },
-        { image: "images/PLL-F-2.PNG", formula: "F" },
-        { image: "images/PLL-F-3.PNG", formula: "F" },
-        { image: "images/PLL-F-4.PNG", formula: "F" },
-      ];
-
-      // 测试状态变量
-      let currentIndex = 0;
-      let practiceCount = 0;
-      let correctCount = 0;
-      let firstTryCorrectCount = 0; // 第一次尝试就答对的题目数量
-      let attemptsLeft = 3;
-      let isAnswered = false;
-      let correctFormula = "";
-      let testQuestions = [];
-      let testResults = [];
-      let questionStartTime = 0;
-      let totalTestTime = 0;
-      let currentQuestionTime = 0;
-      let testInterval;
-      let selectedTestCount = 0;
-      let is21TestMode = false;
-      let wrongQuestions = [];
-      let currentQuestionAttempts = []; // 存储当前题目的所有尝试
-      let isPaused = false; // 暂停状态
-
-      // DOM元素
-      const startScreen = document.getElementById("startScreen");
-      const testScreen = document.getElementById("testScreen");
-      const reportScreen = document.getElementById("reportScreen");
-      const pllImage = document.getElementById("pllImage");
-      const answerElement = document.getElementById("answer");
-      const practiceCountElement = document.getElementById("practiceCount");
-      const correctCountElement = document.getElementById("correctCount");
-      const accuracyElement = document.getElementById("accuracy");
-      const averageTimeElement = document.getElementById("averageTime");
-      const attemptsLeftElement = document.getElementById("attemptsLeft");
-      const currentTimeElement = document.getElementById("currentTime");
-      const pauseTestButton = document.getElementById("pauseTest");
-      const resumeTestButton = document.getElementById("resumeTest");
-      const endTestButton = document.getElementById("endTest");
-      const optionsContainer = document.getElementById("optionsContainer");
-      const startTestButton = document.getElementById("startTest");
-      const restartTestButton = document.getElementById("restartTest");
-      const wrongQuestionsTrainButton = document.getElementById(
-        "wrongQuestionsTrain"
-      );
-      const testOptions = document.querySelectorAll(".test-option");
-      const totalQuestionsElement = document.getElementById("totalQuestions");
-      const reportAccuracyElement = document.getElementById("reportAccuracy");
-      const reportAverageTimeElement =
-        document.getElementById("reportAverageTime");
-      const totalTimeElement = document.getElementById("totalTime");
-      const timeDetailsElement = document.getElementById("timeDetails");
-      const levelComparisonElement = document.getElementById("levelComparison");
-      const pausedOverlay = document.getElementById("pausedOverlay");
-
-      // 初始化
-      window.addEventListener("DOMContentLoaded", function () {
-        // 添加测试选项点击事件
-        testOptions.forEach((option) => {
-          option.addEventListener("click", function () {
-            testOptions.forEach((opt) => opt.classList.remove("selected"));
-            this.classList.add("selected");
-            selectedTestCount = parseInt(this.getAttribute("data-count"));
-            is21TestMode = selectedTestCount === 21;
-          });
-        });
-
-        // 添加开始测试按钮事件
-        startTestButton.addEventListener("click", startTest);
-
-        // 添加暂停/继续按钮事件
-        pauseTestButton.addEventListener("click", togglePause);
-        resumeTestButton.addEventListener("click", togglePause);
-
-        // 添加结束测试按钮事件
-        endTestButton.addEventListener("click", endTest);
-
-        // 添加重新开始按钮事件
-        restartTestButton.addEventListener("click", restartTest);
-
-        // 添加错题训练按钮事件
-        wrongQuestionsTrainButton.addEventListener(
-          "click",
-          startWrongQuestionsTrain
-        );
-
-        // 生成选项按钮
-        generateOptions();
-      });
-
-      function startTest() {
-        if (selectedTestCount === 0) {
-          alert("请选择题量");
-          return;
-        }
-
-        // 生成测试题目
-        generateTestQuestions();
-
-        // 切换到测试界面
-        startScreen.classList.add("hidden");
-        testScreen.classList.remove("hidden");
-
-        // 重置测试状态
-        practiceCount = 0;
-        correctCount = 0;
-        firstTryCorrectCount = 0;
-        testResults = [];
-        totalTestTime = 0;
-        wrongQuestions = [];
-        currentQuestionAttempts = [];
-        isPaused = false;
-
-        // 开始第一题
-        nextImage();
-      }
-
-      function generateTestQuestions() {
-        testQuestions = [];
-
-        if (is21TestMode) {
-          // 21题模式：每个公式出现一次，随机选择4种方向之一
-          const formulaGroups = {};
-
-          // 按公式分组
-          pllData.forEach((item) => {
-            if (!formulaGroups[item.formula]) {
-              formulaGroups[item.formula] = [];
+        // 图片预加载器类
+        class ImagePreloader {
+            constructor() {
+                this.loadedImages = new Map();
+                this.loadingQueue = [];
             }
-            formulaGroups[item.formula].push(item);
-          });
 
-          // 从每个公式组中随机选择一个
-          pllFormulas.forEach((formula) => {
-            if (formulaGroups[formula] && formulaGroups[formula].length > 0) {
-              const randomIndex = Math.floor(
-                Math.random() * formulaGroups[formula].length
-              );
-              testQuestions.push(formulaGroups[formula][randomIndex]);
+            preloadImages(imageUrls) {
+                imageUrls.forEach(url => {
+                    if (!this.loadedImages.has(url)) {
+                        const img = new Image();
+                        img.src = url;
+                        this.loadingQueue.push(
+                            new Promise((resolve, reject) => {
+                                img.onload = () => {
+                                    this.loadedImages.set(url, img);
+                                    resolve(url);
+                                };
+                                img.onerror = () => {
+                                    console.warn(`预加载失败: ${url}`);
+                                    resolve(url);
+                                };
+                            })
+                        );
+                    }
+                });
             }
-          });
 
-          // 随机排序
-          testQuestions = testQuestions.sort(() => Math.random() - 0.5);
-        } else {
-          // 其他模式：从所有题目中随机选择
-          const shuffled = [...pllData].sort(() => Math.random() - 0.5);
-          testQuestions = shuffled.slice(0, selectedTestCount);
-        }
-      }
-
-      function nextImage() {
-        // 如果当前是暂停状态，先恢复
-        if (isPaused) {
-          togglePause();
-        }
-
-        if (practiceCount >= testQuestions.length) {
-          // 测试结束，显示报告
-          showReport();
-          return;
-        }
-
-        const currentPLL = testQuestions[practiceCount];
-
-        // 更新图片
-        pllImage.src = currentPLL.image;
-        pllImage.alt = `PLL图案 - ${currentPLL.formula}`;
-
-        // 重置状态
-        answerElement.textContent = "";
-        answerElement.className = "";
-        isAnswered = false;
-        attemptsLeft = 3;
-        attemptsLeftElement.textContent = attemptsLeft;
-
-        // 重置当前题目的尝试记录
-        currentQuestionAttempts = [];
-
-        // 开始计时
-        startTimer();
-
-        // 重置选项按钮
-        resetOptions();
-
-        // 保存正确答案
-        correctFormula = currentPLL.formula;
-      }
-
-      function startTimer() {
-        questionStartTime = Date.now();
-        currentQuestionTime = 0;
-        currentTimeElement.textContent = "0.0";
-
-        // 清除之前的计时器
-        if (testInterval) clearInterval(testInterval);
-
-        // 更新计时显示
-        testInterval = setInterval(() => {
-          if (!isPaused) {
-            currentQuestionTime = (Date.now() - questionStartTime) / 1000;
-            currentTimeElement.textContent = currentQuestionTime.toFixed(1);
-          }
-        }, 100);
-      }
-
-      function stopTimer() {
-        if (testInterval) {
-          clearInterval(testInterval);
-          testInterval = null;
-        }
-      }
-
-      function togglePause() {
-        if (isPaused) {
-          // 恢复测试
-          isPaused = false;
-          pauseTestButton.textContent = "暂停";
-          pausedOverlay.classList.add("hidden");
-
-          // 重新开始计时
-          questionStartTime = Date.now() - currentQuestionTime * 1000;
-          startTimer();
-
-          // 启用选项按钮
-          const optionButtons = document.querySelectorAll(".option-btn");
-          optionButtons.forEach((button) => {
-            button.disabled = false;
-          });
-        } else {
-          // 暂停测试
-          isPaused = true;
-          pauseTestButton.textContent = "继续";
-          pausedOverlay.classList.remove("hidden");
-
-          // 停止计时
-          stopTimer();
-
-          // 禁用选项按钮
-          const optionButtons = document.querySelectorAll(".option-btn");
-          optionButtons.forEach((button) => {
-            button.disabled = true;
-          });
-        }
-      }
-
-      function generateOptions() {
-        optionsContainer.innerHTML = "";
-
-        // 按字母顺序创建选项按钮
-        pllFormulas.forEach((formula) => {
-          const button = document.createElement("button");
-          button.className = "option-btn";
-          button.textContent = formula;
-          button.addEventListener("click", () => checkAnswer(formula, button));
-          optionsContainer.appendChild(button);
-        });
-      }
-
-      function resetOptions() {
-        const optionButtons = document.querySelectorAll(".option-btn");
-        optionButtons.forEach((button) => {
-          button.className = "option-btn";
-          button.disabled = false;
-        });
-      }
-
-      function checkAnswer(selectedFormula, button) {
-        if (isAnswered || isPaused) return;
-
-        // 记录这次尝试的时间
-        const attemptTime = (Date.now() - questionStartTime) / 1000;
-
-        // 记录这次尝试
-        currentQuestionAttempts.push({
-          formula: selectedFormula,
-          time: attemptTime,
-          correct: selectedFormula === correctFormula,
-        });
-
-        if (selectedFormula === correctFormula) {
-          // 回答正确
-          button.classList.add("correct");
-          answerElement.textContent = "✓ 正确！";
-          answerElement.className = "answer-visible";
-          isAnswered = true;
-          correctCount++;
-
-          // 如果是第一次尝试就答对，增加一次答对计数
-          if (currentQuestionAttempts.length === 1) {
-            firstTryCorrectCount++;
-          }
-
-          // 记录结果
-          testResults.push({
-            formula: correctFormula,
-            image: testQuestions[practiceCount].image,
-            attempts: [...currentQuestionAttempts], // 复制所有尝试记录
-            correct: true,
-          });
-
-          // 如果有错误尝试，记录为错题
-          if (currentQuestionAttempts.some((attempt) => !attempt.correct)) {
-            if (
-              !wrongQuestions.some(
-                (q) =>
-                  q.formula === correctFormula &&
-                  q.image === testQuestions[practiceCount].image
-              )
-            ) {
-              wrongQuestions.push(testQuestions[practiceCount]);
+            async waitForPreload() {
+                await Promise.all(this.loadingQueue);
+                this.loadingQueue = [];
             }
-          }
 
-          // 禁用所有选项
-          disableAllOptions();
+            getImage(url) {
+                return this.loadedImages.get(url);
+            }
+        }
 
-          // 更新统计
-          practiceCount++;
-          updateStats();
+        // 创建预加载器实例
+        const preloader = new ImagePreloader();
 
-          // 1秒后自动进入下一题
-          setTimeout(nextImage, 1000);
-        } else {
-          // 回答错误
-          button.classList.add("wrong");
-          button.disabled = true;
-          attemptsLeft--;
-          attemptsLeftElement.textContent = attemptsLeft;
+        // PLL公式列表
+        const pllFormulas = [
+            "Aa", "Ab", "E", "F", 
+            "Ga", "Gb", "Gc", "Gd", 
+            "H", "J", "L", "Na", 
+            "Nb", "Ra", "Rb", "T", 
+            "Ua", "Ub", "V", "Y", "Z"
+        ];
 
-          // 只要有错误尝试，就记录为错题
-          if (
-            !wrongQuestions.some(
-              (q) =>
-                q.formula === correctFormula &&
-                q.image === testQuestions[practiceCount].image
-            )
-          ) {
-            wrongQuestions.push(testQuestions[practiceCount]);
-          }
+        // 根据您的命名规则生成PLL数据
+        function generatePllData() {
+            const pllData = [];
+            const basePath = "images/";
+            
+            // 4种颜色组（1,2,3,4）
+            const colorGroups = [1, 2, 3, 4];
+            // 4个方向（1,2,3,4）
+            const directions = [1, 2, 3, 4];
+            
+            pllFormulas.forEach(formula => {
+                // 每个公式有4种颜色组
+                colorGroups.forEach(colorGroup => {
+                    // 每个颜色组有4个方向
+                    directions.forEach(direction => {
+                        // 修正图片路径格式：PLL-1Aa-1.PNG
+                        pllData.push({
+                            image: `${basePath}PLL-${colorGroup}${formula}-${direction}.PNG`,
+                            formula: formula,
+                            colorGroup: colorGroup,
+                            direction: direction
+                        });
+                    });
+                });
+            });
+            
+            return pllData;
+        }
 
-          if (attemptsLeft <= 0) {
-            // 3次机会用完
-            answerElement.textContent = `✗ 正确答案是: ${correctFormula}`;
-            answerElement.className = "answer-wrong";
-            isAnswered = true;
-            disableAllOptions();
-            // 高亮显示正确答案
-            highlightCorrectAnswer();
+        // 生成PLL数据
+        const pllData = generatePllData();
 
-            // 记录结果
-            testResults.push({
-              formula: correctFormula,
-              image: testQuestions[practiceCount].image,
-              attempts: [...currentQuestionAttempts], // 复制所有尝试记录
-              correct: false,
+        // 测试状态变量
+        let currentIndex = 0;
+        let practiceCount = 0;
+        let correctCount = 0;
+        let firstTryCorrectCount = 0;
+        let attemptsLeft = 3;
+        let isAnswered = false;
+        let correctFormula = "";
+        let testQuestions = [];
+        let testResults = [];
+        let questionStartTime = 0;
+        let totalTestTime = 0;
+        let currentQuestionTime = 0;
+        let testInterval;
+        let selectedTestCount = 0;
+        let trainingMode = ""; // "basic", "advanced", "custom"
+        let wrongQuestions = [];
+        let currentQuestionAttempts = [];
+        let isPaused = false;
+        let selectedFormulas = []; // 个性化训练选择的公式
+        let timesPerFormula = 1; // 每个公式的训练次数
+        let customColorMode = "1"; // 个性化训练颜色模式："1"或"4"
+
+        // DOM元素
+        const startScreen = document.getElementById("startScreen");
+        const testScreen = document.getElementById("testScreen");
+        const reportScreen = document.getElementById("reportScreen");
+        let pllImage = document.getElementById("pllImage");
+        const answerElement = document.getElementById("answer");
+        const practiceCountElement = document.getElementById("practiceCount");
+        const correctCountElement = document.getElementById("correctCount");
+        const accuracyElement = document.getElementById("accuracy");
+        const averageTimeElement = document.getElementById("averageTime");
+        const attemptsLeftElement = document.getElementById("attemptsLeft");
+        const currentTimeElement = document.getElementById("currentTime");
+        const pauseTestButton = document.getElementById("pauseTest");
+        const resumeTestButton = document.getElementById("resumeTest");
+        const endTestButton = document.getElementById("endTest");
+        const optionsContainer = document.getElementById("optionsContainer");
+        const startTestButton = document.getElementById("startTest");
+        const restartTestButton = document.getElementById("restartTest");
+        const wrongQuestionsTrainButton = document.getElementById("wrongQuestionsTrain");
+        const formulaSelection = document.getElementById("formulaSelection");
+        const timesInput = document.getElementById("timesInput");
+        const confirmSelectionButton = document.getElementById("confirmSelection");
+        const colorOptions = document.querySelectorAll(".color-option");
+        const testOptions = document.querySelectorAll(".test-option");
+        const totalQuestionsElement = document.getElementById("totalQuestions");
+        const reportAccuracyElement = document.getElementById("reportAccuracy");
+        const reportAverageTimeElement = document.getElementById("reportAverageTime");
+        const totalTimeElement = document.getElementById("totalTime");
+        const timeDetailsElement = document.getElementById("timeDetails");
+        const levelComparisonElement = document.getElementById("levelComparison");
+        const pausedOverlay = document.getElementById("pausedOverlay");
+
+        // 初始化
+        window.addEventListener("DOMContentLoaded", function () {
+            // 添加测试选项点击事件
+            testOptions.forEach((option) => {
+                option.addEventListener("click", function () {
+                    // 清除同模式下的其他选中状态
+                    const mode = this.getAttribute("data-mode");
+                    document.querySelectorAll(`.test-option[data-mode="${mode}"]`).forEach(opt => {
+                        opt.classList.remove("selected");
+                    });
+                    
+                    this.classList.add("selected");
+                    selectedTestCount = parseInt(this.getAttribute("data-count"));
+                    trainingMode = mode;
+                });
             });
 
-            // 更新统计
-            practiceCount++;
-            updateStats();
+            // 添加颜色选择事件
+            colorOptions.forEach(option => {
+                option.addEventListener("click", function() {
+                    colorOptions.forEach(opt => opt.classList.remove("selected"));
+                    this.classList.add("selected");
+                    customColorMode = this.getAttribute("data-colors");
+                });
+            });
 
-            // 1秒后自动进入下一题
-            setTimeout(nextImage, 1000);
-          } else {
-            answerElement.textContent = `✗ 不正确，还有 ${attemptsLeft} 次机会`;
-            answerElement.className = "answer-wrong";
+            // 添加开始测试按钮事件
+            startTestButton.addEventListener("click", startTest);
 
-            // 重新开始计时
+            // 添加暂停/继续按钮事件
+            pauseTestButton.addEventListener("click", togglePause);
+            resumeTestButton.addEventListener("click", togglePause);
+
+            // 添加结束测试按钮事件
+            endTestButton.addEventListener("click", endTest);
+
+            // 添加重新开始按钮事件
+            restartTestButton.addEventListener("click", restartTest);
+
+            // 添加错题训练按钮事件
+            wrongQuestionsTrainButton.addEventListener("click", startWrongQuestionsTrain);
+
+            // 添加公式选择事件
+            generateFormulaSelection();
+
+            // 添加确认选择事件
+            confirmSelectionButton.addEventListener("click", confirmCustomSelection);
+
+            // 生成选项按钮
+            generateOptions();
+            
+            // 添加图片错误处理
+            pllImage.onerror = function() {
+                console.error(`图片加载失败: ${this.src}`);
+                this.alt = '图片加载失败';
+                // 创建一个简单的占位图片
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, 200, 200);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('图片加载失败', 100, 110);
+                this.src = canvas.toDataURL();
+            };
+        });
+
+        // 生成公式选择界面
+        function generateFormulaSelection() {
+            formulaSelection.innerHTML = "";
+            
+            pllFormulas.forEach(formula => {
+                const option = document.createElement("div");
+                option.className = "formula-option";
+                option.textContent = formula;
+                option.setAttribute("data-formula", formula);
+                option.addEventListener("click", function() {
+                    this.classList.toggle("selected");
+                });
+                formulaSelection.appendChild(option);
+            });
+        }
+
+        // 确认个性化选择
+        function confirmCustomSelection() {
+            const selectedOptions = document.querySelectorAll(".formula-option.selected");
+            selectedFormulas = Array.from(selectedOptions).map(option => option.getAttribute("data-formula"));
+            timesPerFormula = parseInt(timesInput.value) || 1;
+            
+            if (selectedFormulas.length === 0) {
+                alert("请至少选择一个公式");
+                return;
+            }
+            
+            trainingMode = "custom";
+            selectedTestCount = selectedFormulas.length * timesPerFormula;
+            
+            // 清除其他模式的选中状态
+            document.querySelectorAll(".test-option").forEach(opt => {
+                opt.classList.remove("selected");
+            });
+            
+            alert(`已选择 ${selectedFormulas.length} 个公式，每个公式训练 ${timesPerFormula} 次，共 ${selectedTestCount} 题`);
+        }
+
+        async function startTest() {
+            if (trainingMode === "" || selectedTestCount === 0) {
+                alert("请选择训练模式和题量");
+                return;
+            }
+
+            // 生成测试题目
+            generateTestQuestions();
+
+            // 切换到测试界面
+            startScreen.classList.add("hidden");
+            testScreen.classList.remove("hidden");
+
+            // 显示加载状态
+            const imageContainer = document.querySelector('.image-container');
+            imageContainer.innerHTML = '<div class="loading-spinner">加载图片中...</div>';
+
+            // 重置测试状态
+            practiceCount = 0;
+            correctCount = 0;
+            firstTryCorrectCount = 0;
+            testResults = [];
+            totalTestTime = 0;
+            wrongQuestions = [];
+            currentQuestionAttempts = [];
+            isPaused = false;
+
+            try {
+                // 预加载所有测试图片
+                const testImageUrls = testQuestions.map(q => q.image);
+                await preloader.preloadImages(testImageUrls);
+                console.log(`预加载完成: ${testImageUrls.length} 张图片`);
+            } catch (error) {
+                console.warn('预加载过程中出现问题:', error);
+            }
+
+            // 恢复图片容器
+            imageContainer.innerHTML = '<img id="pllImage" src="" alt="PLL图案" />';
+            pllImage = document.getElementById('pllImage');
+            
+            // 添加图片错误处理
+            pllImage.onerror = function() {
+                console.error(`图片加载失败: ${this.src}`);
+                this.alt = '图片加载失败';
+                // 创建一个简单的占位图片
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, 200, 200);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('图片加载失败', 100, 110);
+                this.src = canvas.toDataURL();
+            };
+            
+            // 开始第一题
+            nextImage();
+        }
+
+        // 生成测试题目 - 确保不同情况
+        function generateTestQuestions() {
+            testQuestions = [];
+
+            if (trainingMode === "basic") {
+                // 初级版：只使用颜色组1
+                const basicData = pllData.filter(item => item.colorGroup === 1);
+                
+                if (selectedTestCount === 21) {
+                    // 每个公式出现一次
+                    const formulaGroups = {};
+                    basicData.forEach(item => {
+                        if (!formulaGroups[item.formula]) {
+                            formulaGroups[item.formula] = [];
+                        }
+                        formulaGroups[item.formula].push(item);
+                    });
+                    
+                    pllFormulas.forEach(formula => {
+                        if (formulaGroups[formula] && formulaGroups[formula].length > 0) {
+                            const randomIndex = Math.floor(Math.random() * formulaGroups[formula].length);
+                            testQuestions.push(formulaGroups[formula][randomIndex]);
+                        }
+                    });
+                } else if (selectedTestCount === 42) {
+                    // 每个公式出现两次 - 确保不同情况
+                    const formulaGroups = {};
+                    basicData.forEach(item => {
+                        if (!formulaGroups[item.formula]) {
+                            formulaGroups[item.formula] = [];
+                        }
+                        formulaGroups[item.formula].push(item);
+                    });
+                    
+                    pllFormulas.forEach(formula => {
+                        if (formulaGroups[formula] && formulaGroups[formula].length > 0) {
+                            // 随机选择两个不同的方向
+                            const shuffled = [...formulaGroups[formula]].sort(() => Math.random() - 0.5);
+                            
+                            // 确保选择两个不同的情况
+                            if (shuffled.length >= 2) {
+                                testQuestions.push(shuffled[0]);
+                                testQuestions.push(shuffled[1]);
+                            } else if (shuffled.length === 1) {
+                                // 如果只有一个情况，重复使用（理论上不会发生，因为每个公式有4个方向）
+                                testQuestions.push(shuffled[0]);
+                                testQuestions.push(shuffled[0]);
+                            }
+                        }
+                    });
+                } else {
+                    // 随机选择指定数量的题目
+                    const shuffled = [...basicData].sort(() => Math.random() - 0.5);
+                    testQuestions = shuffled.slice(0, selectedTestCount);
+                }
+            } else if (trainingMode === "advanced") {
+                // 进阶版：使用所有颜色组和方向
+                if (selectedTestCount === 21) {
+                    // 每个公式出现一次
+                    const formulaGroups = {};
+                    pllData.forEach(item => {
+                        if (!formulaGroups[item.formula]) {
+                            formulaGroups[item.formula] = [];
+                        }
+                        formulaGroups[item.formula].push(item);
+                    });
+                    
+                    pllFormulas.forEach(formula => {
+                        if (formulaGroups[formula] && formulaGroups[formula].length > 0) {
+                            const randomIndex = Math.floor(Math.random() * formulaGroups[formula].length);
+                            testQuestions.push(formulaGroups[formula][randomIndex]);
+                        }
+                    });
+                } else if (selectedTestCount === 42) {
+                    // 每个公式出现两次 - 确保不同情况
+                    const formulaGroups = {};
+                    pllData.forEach(item => {
+                        if (!formulaGroups[item.formula]) {
+                            formulaGroups[item.formula] = [];
+                        }
+                        formulaGroups[item.formula].push(item);
+                    });
+                    
+                    pllFormulas.forEach(formula => {
+                        if (formulaGroups[formula] && formulaGroups[formula].length > 0) {
+                            // 随机选择两个不同的情况
+                            const shuffled = [...formulaGroups[formula]].sort(() => Math.random() - 0.5);
+                            
+                            // 确保选择两个不同的情况
+                            if (shuffled.length >= 2) {
+                                testQuestions.push(shuffled[0]);
+                                testQuestions.push(shuffled[1]);
+                            } else if (shuffled.length === 1) {
+                                // 如果只有一个情况，重复使用（理论上不会发生，因为每个公式有16种情况）
+                                testQuestions.push(shuffled[0]);
+                                testQuestions.push(shuffled[0]);
+                            }
+                        }
+                    });
+                } else {
+                    // 随机选择指定数量的题目
+                    const shuffled = [...pllData].sort(() => Math.random() - 0.5);
+                    testQuestions = shuffled.slice(0, selectedTestCount);
+                }
+            } else if (trainingMode === "custom") {
+                // 个性化训练 - 确保每个公式的多次训练都是不同情况
+                selectedFormulas.forEach(formula => {
+                    // 根据选择的颜色模式筛选数据
+                    let formulaCases;
+                    if (customColorMode === "1") {
+                        // 1种颜色：只使用颜色组1
+                        formulaCases = pllData.filter(item => 
+                            item.formula === formula && item.colorGroup === 1
+                        );
+                    } else {
+                        // 4种颜色：使用所有颜色组
+                        formulaCases = pllData.filter(item => item.formula === formula);
+                    }
+                    
+                    // 随机选择指定数量的不同情况
+                    const shuffled = [...formulaCases].sort(() => Math.random() - 0.5);
+                    const selectedCases = shuffled.slice(0, timesPerFormula);
+                    
+                    // 如果可用情况少于需要的次数，使用重复的情况
+                    if (selectedCases.length < timesPerFormula) {
+                        const needed = timesPerFormula - selectedCases.length;
+                        for (let i = 0; i < needed; i++) {
+                            selectedCases.push(shuffled[i % shuffled.length]);
+                        }
+                    }
+                    
+                    testQuestions.push(...selectedCases);
+                });
+                
+                // 随机排序
+                testQuestions = testQuestions.sort(() => Math.random() - 0.5);
+            }
+
+            // 确保题目数量正确
+            if (testQuestions.length > selectedTestCount) {
+                testQuestions = testQuestions.slice(0, selectedTestCount);
+            }
+            
+            console.log("生成的测试题目:", testQuestions);
+            
+            // 验证是否确保不同情况
+            if (trainingMode === "basic" && selectedTestCount === 42) {
+                verifyDifferentCases();
+            } else if (trainingMode === "advanced" && selectedTestCount === 42) {
+                verifyDifferentCases();
+            } else if (trainingMode === "custom") {
+                verifyCustomDifferentCases();
+            }
+        }
+
+        // 验证42题模式确保不同情况
+        function verifyDifferentCases() {
+            const formulaCounts = {};
+            testQuestions.forEach(question => {
+                if (!formulaCounts[question.formula]) {
+                    formulaCounts[question.formula] = [];
+                }
+                formulaCounts[question.formula].push(question);
+            });
+            
+            for (const formula in formulaCounts) {
+                if (formulaCounts[formula].length > 1) {
+                    const cases = formulaCounts[formula];
+                    const uniqueCases = new Set(cases.map(c => `${c.colorGroup}-${c.direction}`));
+                    
+                    if (uniqueCases.size < cases.length) {
+                        console.warn(`公式 ${formula} 有重复情况:`, cases);
+                    } else {
+                        console.log(`公式 ${formula} 的不同情况验证通过`);
+                    }
+                }
+            }
+        }
+
+        // 验证个性化训练确保不同情况
+        function verifyCustomDifferentCases() {
+            const formulaCounts = {};
+            testQuestions.forEach(question => {
+                if (!formulaCounts[question.formula]) {
+                    formulaCounts[question.formula] = [];
+                }
+                formulaCounts[question.formula].push(question);
+            });
+            
+            for (const formula in formulaCounts) {
+                if (formulaCounts[formula].length > 1) {
+                    const cases = formulaCounts[formula];
+                    const uniqueCases = new Set(cases.map(c => `${c.colorGroup}-${c.direction}`));
+                    
+                    if (uniqueCases.size < cases.length) {
+                        console.warn(`个性化训练中公式 ${formula} 有重复情况:`, cases);
+                    } else {
+                        console.log(`个性化训练中公式 ${formula} 的不同情况验证通过`);
+                    }
+                }
+            }
+        }
+
+        // 其余函数保持不变...
+        function nextImage() {
+            // 如果当前是暂停状态，先恢复
+            if (isPaused) {
+                togglePause();
+            }
+
+            if (practiceCount >= testQuestions.length) {
+                // 测试结束，显示报告
+                showReport();
+                return;
+            }
+
+            const currentPLL = testQuestions[practiceCount];
+            console.log("当前题目:", currentPLL);
+
+            // 使用预加载的图片（如果可用）
+            const preloadedImage = preloader.getImage(currentPLL.image);
+            if (preloadedImage) {
+                pllImage.src = preloadedImage.src;
+            } else {
+                // 如果没有预加载成功，回退到直接设置src
+                pllImage.src = currentPLL.image;
+            }
+            
+            pllImage.alt = `PLL图案 - ${currentPLL.formula}`;
+
+            // 重置状态
+            answerElement.textContent = "";
+            answerElement.className = "";
+            isAnswered = false;
+            attemptsLeft = 3;
+            attemptsLeftElement.textContent = attemptsLeft;
+
+            // 重置当前题目的尝试记录
+            currentQuestionAttempts = [];
+
+            // 开始计时
             startTimer();
-          }
-        }
-      }
 
-      function disableAllOptions() {
-        const optionButtons = document.querySelectorAll(".option-btn");
-        optionButtons.forEach((button) => {
-          button.disabled = true;
-        });
-      }
+            // 重置选项按钮
+            resetOptions();
 
-      function highlightCorrectAnswer() {
-        const optionButtons = document.querySelectorAll(".option-btn");
-        optionButtons.forEach((button) => {
-          if (button.textContent === correctFormula) {
-            button.classList.add("correct");
-          }
-        });
-      }
-
-      function updateStats() {
-        practiceCountElement.textContent = practiceCount;
-        correctCountElement.textContent = firstTryCorrectCount;
-
-        const accuracy =
-          practiceCount > 0
-            ? Math.round((firstTryCorrectCount / practiceCount) * 100)
-            : 0;
-        accuracyElement.textContent = `${accuracy}%`;
-
-        // 计算平均时间（只计算一次答对的题目）
-        const firstTryCorrectResults = testResults.filter(
-          (result) => result.correct && result.attempts.length === 1
-        );
-        const totalTimeFirstTry = firstTryCorrectResults.reduce(
-          (sum, result) => {
-            return sum + (result.attempts[0]?.time || 0);
-          },
-          0
-        );
-        const avgTime =
-          firstTryCorrectResults.length > 0
-            ? (totalTimeFirstTry / firstTryCorrectResults.length).toFixed(1)
-            : "0.0";
-        averageTimeElement.textContent = avgTime;
-      }
-
-      function endTest() {
-        // 停止计时器
-        stopTimer();
-
-        // 如果当前题目已经开始但未完成，记录为未完成
-        if (practiceCount < testQuestions.length && !isAnswered) {
-          testResults.push({
-            formula: correctFormula,
-            image: testQuestions[practiceCount].image,
-            attempts: [...currentQuestionAttempts],
-            correct: false,
-            incomplete: true,
-          });
-
-          // 只要有错误尝试，就记录为错题
-          if (
-            currentQuestionAttempts.some((attempt) => !attempt.correct) &&
-            !wrongQuestions.some(
-              (q) =>
-                q.formula === correctFormula &&
-                q.image === testQuestions[practiceCount].image
-            )
-          ) {
-            wrongQuestions.push(testQuestions[practiceCount]);
-          }
+            // 保存正确答案
+            correctFormula = currentPLL.formula;
         }
 
-        // 显示报告
-        showReport();
-      }
+        function startTimer() {
+            questionStartTime = Date.now();
+            currentQuestionTime = 0;
+            currentTimeElement.textContent = "0.0";
 
-      function showReport() {
-        // 切换到报告界面
-        testScreen.classList.add("hidden");
-        reportScreen.classList.remove("hidden");
+            // 清除之前的计时器
+            if (testInterval) clearInterval(testInterval);
 
-        // 计算统计数据
-        const totalQuestions = testResults.length;
-        const firstTryCorrectCountReport = testResults.filter(
-          (result) => result.correct && result.attempts.length === 1
-        ).length;
-        const accuracy =
-          totalQuestions > 0
-            ? Math.round((firstTryCorrectCountReport / totalQuestions) * 100)
-            : 0;
+            // 更新计时显示
+            testInterval = setInterval(() => {
+                if (!isPaused) {
+                    currentQuestionTime = (Date.now() - questionStartTime) / 1000;
+                    currentTimeElement.textContent = currentQuestionTime.toFixed(1);
+                }
+            }, 100);
+        }
 
-        // 计算总时间（只计算一次答对的题目）
-        const firstTryCorrectResults = testResults.filter(
-          (result) => result.correct && result.attempts.length === 1
-        );
-        const totalTimeReport = firstTryCorrectResults.reduce((sum, result) => {
-          return sum + (result.attempts[0]?.time || 0);
-        }, 0);
+        function stopTimer() {
+            if (testInterval) {
+                clearInterval(testInterval);
+                testInterval = null;
+            }
+        }
 
-        const averageTime =
-          firstTryCorrectResults.length > 0
-            ? (totalTimeReport / firstTryCorrectResults.length).toFixed(1)
-            : "0.0";
+        function togglePause() {
+            if (isPaused) {
+                // 恢复测试
+                isPaused = false;
+                pauseTestButton.textContent = "暂停";
+                pausedOverlay.classList.add("hidden");
 
-        // 更新报告摘要
-        totalQuestionsElement.textContent = totalQuestions;
-        reportAccuracyElement.textContent = `${accuracy}%`;
-        reportAverageTimeElement.textContent = `${averageTime}秒`;
-        totalTimeElement.textContent = `${totalTimeReport.toFixed(1)}秒`;
+                // 重新开始计时
+                questionStartTime = Date.now() - currentQuestionTime * 1000;
+                startTimer();
 
-        // 生成每题详细用时
-        timeDetailsElement.innerHTML = "";
-        testResults.forEach((result, index) => {
-          const questionResult = document.createElement("div");
-          questionResult.className = "question-result";
+                // 启用选项按钮
+                const optionButtons = document.querySelectorAll(".option-btn");
+                optionButtons.forEach((button) => {
+                    button.disabled = false;
+                });
+            } else {
+                // 暂停测试
+                isPaused = true;
+                pauseTestButton.textContent = "继续";
+                pausedOverlay.classList.remove("hidden");
 
-          let statusSymbol = result.correct ? "✓" : "✗";
-          let statusText = result.correct ? "正确" : "错误";
-          if (result.incomplete) {
-            statusSymbol = "○";
-            statusText = "未完成";
-          }
+                // 停止计时
+                stopTimer();
 
-          questionResult.innerHTML = `
+                // 禁用选项按钮
+                const optionButtons = document.querySelectorAll(".option-btn");
+                optionButtons.forEach((button) => {
+                    button.disabled = true;
+                });
+            }
+        }
+
+        function generateOptions() {
+            optionsContainer.innerHTML = "";
+
+            // 按字母顺序创建选项按钮
+            pllFormulas.forEach((formula) => {
+                const button = document.createElement("button");
+                button.className = "option-btn";
+                button.textContent = formula;
+                button.addEventListener("click", () => checkAnswer(formula, button));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function resetOptions() {
+            const optionButtons = document.querySelectorAll(".option-btn");
+            optionButtons.forEach((button) => {
+                button.className = "option-btn";
+                button.disabled = false;
+            });
+        }
+
+        function checkAnswer(selectedFormula, button) {
+            if (isAnswered || isPaused) return;
+
+            // 记录这次尝试的时间
+            const attemptTime = (Date.now() - questionStartTime) / 1000;
+
+            // 记录这次尝试
+            currentQuestionAttempts.push({
+                formula: selectedFormula,
+                time: attemptTime,
+                correct: selectedFormula === correctFormula,
+            });
+
+            if (selectedFormula === correctFormula) {
+                // 回答正确
+                button.classList.add("correct");
+                answerElement.textContent = "✓ 正确！";
+                answerElement.className = "answer-visible";
+                isAnswered = true;
+                correctCount++;
+
+                // 如果是第一次尝试就答对，增加一次答对计数
+                if (currentQuestionAttempts.length === 1) {
+                    firstTryCorrectCount++;
+                }
+
+                // 记录结果
+                testResults.push({
+                    formula: correctFormula,
+                    image: testQuestions[practiceCount].image,
+                    attempts: [...currentQuestionAttempts],
+                    correct: true,
+                });
+
+                // 如果有错误尝试，记录为错题
+                if (currentQuestionAttempts.some((attempt) => !attempt.correct)) {
+                    if (!wrongQuestions.some(q => q.formula === correctFormula && q.image === testQuestions[practiceCount].image)) {
+                        wrongQuestions.push(testQuestions[practiceCount]);
+                    }
+                }
+
+                // 禁用所有选项
+                disableAllOptions();
+
+                // 更新统计
+                practiceCount++;
+                updateStats();
+
+                // 1秒后自动进入下一题
+                setTimeout(nextImage, 1000);
+            } else {
+                // 回答错误
+                button.classList.add("wrong");
+                button.disabled = true;
+                attemptsLeft--;
+                attemptsLeftElement.textContent = attemptsLeft;
+
+                // 只要有错误尝试，就记录为错题
+                if (!wrongQuestions.some(q => q.formula === correctFormula && q.image === testQuestions[practiceCount].image)) {
+                    wrongQuestions.push(testQuestions[practiceCount]);
+                }
+
+                if (attemptsLeft <= 0) {
+                    // 3次机会用完
+                    answerElement.textContent = `✗ 正确答案是: ${correctFormula}`;
+                    answerElement.className = "answer-wrong";
+                    isAnswered = true;
+                    disableAllOptions();
+                    // 高亮显示正确答案
+                    highlightCorrectAnswer();
+
+                    // 记录结果
+                    testResults.push({
+                        formula: correctFormula,
+                        image: testQuestions[practiceCount].image,
+                        attempts: [...currentQuestionAttempts],
+                        correct: false,
+                    });
+
+                    // 更新统计
+                    practiceCount++;
+                    updateStats();
+
+                    // 1秒后自动进入下一题
+                    setTimeout(nextImage, 1000);
+                } else {
+                    answerElement.textContent = `✗ 不正确，还有 ${attemptsLeft} 次机会`;
+                    answerElement.className = "answer-wrong";
+
+                    // 重新开始计时
+                    startTimer();
+                }
+            }
+        }
+
+        function disableAllOptions() {
+            const optionButtons = document.querySelectorAll(".option-btn");
+            optionButtons.forEach((button) => {
+                button.disabled = true;
+            });
+        }
+
+        function highlightCorrectAnswer() {
+            const optionButtons = document.querySelectorAll(".option-btn");
+            optionButtons.forEach((button) => {
+                if (button.textContent === correctFormula) {
+                    button.classList.add("correct");
+                }
+            });
+        }
+
+        function updateStats() {
+            practiceCountElement.textContent = practiceCount;
+            correctCountElement.textContent = firstTryCorrectCount;
+
+            const accuracy = practiceCount > 0 ? Math.round((firstTryCorrectCount / practiceCount) * 100) : 0;
+            accuracyElement.textContent = `${accuracy}%`;
+
+            // 计算平均时间（只计算一次答对的题目）
+            const firstTryCorrectResults = testResults.filter(result => result.correct && result.attempts.length === 1);
+            const totalTimeFirstTry = firstTryCorrectResults.reduce((sum, result) => {
+                return sum + (result.attempts[0]?.time || 0);
+            }, 0);
+            const avgTime = firstTryCorrectResults.length > 0 ? (totalTimeFirstTry / firstTryCorrectResults.length).toFixed(1) : "0.0";
+            averageTimeElement.textContent = avgTime;
+        }
+
+        function endTest() {
+            // 停止计时器
+            stopTimer();
+
+            // 如果当前题目已经开始但未完成，记录为未完成
+            if (practiceCount < testQuestions.length && !isAnswered) {
+                testResults.push({
+                    formula: correctFormula,
+                    image: testQuestions[practiceCount].image,
+                    attempts: [...currentQuestionAttempts],
+                    correct: false,
+                    incomplete: true,
+                });
+
+                // 只要有错误尝试，就记录为错题
+                if (currentQuestionAttempts.some(attempt => !attempt.correct) && 
+                    !wrongQuestions.some(q => q.formula === correctFormula && q.image === testQuestions[practiceCount].image)) {
+                    wrongQuestions.push(testQuestions[practiceCount]);
+                }
+            }
+
+            // 显示报告
+            showReport();
+        }
+
+        function showReport() {
+            // 切换到报告界面
+            testScreen.classList.add("hidden");
+            reportScreen.classList.remove("hidden");
+
+            // 计算统计数据
+            const totalQuestions = testResults.length;
+            const firstTryCorrectCountReport = testResults.filter(result => result.correct && result.attempts.length === 1).length;
+            const accuracy = totalQuestions > 0 ? Math.round((firstTryCorrectCountReport / totalQuestions) * 100) : 0;
+
+            // 计算总时间（只计算一次答对的题目）
+            const firstTryCorrectResults = testResults.filter(result => result.correct && result.attempts.length === 1);
+            const totalTimeReport = firstTryCorrectResults.reduce((sum, result) => {
+                return sum + (result.attempts[0]?.time || 0);
+            }, 0);
+
+            const averageTime = firstTryCorrectResults.length > 0 ? (totalTimeReport / firstTryCorrectResults.length).toFixed(1) : "0.0";
+
+            // 更新报告摘要
+            totalQuestionsElement.textContent = totalQuestions;
+            reportAccuracyElement.textContent = `${accuracy}%`;
+            reportAverageTimeElement.textContent = `${averageTime}秒`;
+            totalTimeElement.textContent = `${totalTimeReport.toFixed(1)}秒`;
+
+            // 生成每题详细用时
+            timeDetailsElement.innerHTML = "";
+            testResults.forEach((result, index) => {
+                const questionResult = document.createElement("div");
+                questionResult.className = "question-result";
+
+                let statusSymbol = result.correct ? "✓" : "✗";
+                let statusText = result.correct ? "正确" : "错误";
+                if (result.incomplete) {
+                    statusSymbol = "○";
+                    statusText = "未完成";
+                }
+
+                questionResult.innerHTML = `
                     <div class="question-header">
                         <div>
-                            <strong>第${index + 1}题 (${
-            result.formula
-          }): ${statusSymbol} ${statusText}</strong>
+                            <strong>第${index + 1}题 (${result.formula}): ${statusSymbol} ${statusText}</strong>
                         </div>
                     </div>
                     <div>
-                        ${result.attempts
-                          .map(
-                            (attempt, i) => `
+                        ${result.attempts.map((attempt, i) => `
                             <div class="attempt-item">
-                                <span>尝试${i + 1}: ${
-                              attempt.formula
-                            } - ${attempt.time.toFixed(1)}秒</span>
+                                <span>尝试${i + 1}: ${attempt.formula} - ${attempt.time.toFixed(1)}秒</span>
                                 <span>${attempt.correct ? "✓" : "✗"}</span>
                             </div>
-                        `
-                          )
-                          .join("")}
+                        `).join("")}
                     </div>
-                    ${
-                      result.attempts.some((attempt) => !attempt.correct)
-                        ? `
+                    ${result.attempts.some(attempt => !attempt.correct) ? `
                         <div class="wrong-image-container">
                             <img src="${result.image}" alt="错题图片" class="wrong-image">
                         </div>
-                    `
-                        : ""
-                    }
+                    ` : ""}
                 `;
-          timeDetailsElement.appendChild(questionResult);
+                timeDetailsElement.appendChild(questionResult);
+            });
+
+            // 水平对比
+            const avgTimeNum = parseFloat(averageTime);
+            let levelText = "";
+
+            if (avgTimeNum <= 0.8) {
+                levelText = "您的识别速度达到了世界级选手水平！";
+            } else if (avgTimeNum <= 1.2) {
+                levelText = "您的识别速度达到了Sub-10选手水平！";
+            } else if (avgTimeNum <= 1.8) {
+                levelText = "您的识别速度达到了Sub-15选手水平！";
+            } else if (avgTimeNum <= 3.0) {
+                levelText = "您的识别速度良好，继续练习可以进一步提升！";
+            } else {
+                levelText = "您的识别速度还有提升空间，多加练习会更好！";
+            }
+
+            levelComparisonElement.textContent = levelText;
+
+            // 显示或隐藏错题训练按钮
+            if (wrongQuestions.length > 0) {
+                wrongQuestionsTrainButton.style.display = "inline-block";
+            } else {
+                wrongQuestionsTrainButton.style.display = "none";
+            }
+        }
+
+        async function startWrongQuestionsTrain() {
+            if (wrongQuestions.length === 0) {
+                alert("没有错题可以训练！");
+                return;
+            }
+
+            // 设置错题为测试题目并打乱顺序
+            testQuestions = [...wrongQuestions].sort(() => Math.random() - 0.5);
+            selectedTestCount = wrongQuestions.length;
+            trainingMode = "custom";
+
+            // 切换到测试界面
+            reportScreen.classList.add("hidden");
+            testScreen.classList.remove("hidden");
+
+            // 显示加载状态
+            const imageContainer = document.querySelector('.image-container');
+            imageContainer.innerHTML = '<div class="loading-spinner">加载图片中...</div>';
+
+            // 重置测试状态
+            practiceCount = 0;
+            correctCount = 0;
+            firstTryCorrectCount = 0;
+            testResults = [];
+            totalTestTime = 0;
+            wrongQuestions = [];
+            currentQuestionAttempts = [];
+            isPaused = false;
+
+            try {
+                // 预加载错题图片
+                const wrongImageUrls = testQuestions.map(q => q.image);
+                await preloader.preloadImages(wrongImageUrls);
+                console.log(`错题预加载完成: ${wrongImageUrls.length} 张图片`);
+            } catch (error) {
+                console.warn('错题预加载过程中出现问题:', error);
+            }
+
+            // 恢复图片容器
+            imageContainer.innerHTML = '<img id="pllImage" src="" alt="PLL图案" />';
+            pllImage = document.getElementById('pllImage');
+            
+            // 添加图片错误处理
+            pllImage.onerror = function() {
+                console.error(`图片加载失败: ${this.src}`);
+                this.alt = '图片加载失败';
+                // 创建一个简单的占位图片
+                const canvas = document.createElement('canvas');
+                canvas.width = 200;
+                canvas.height = 200;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f8f9fa';
+                ctx.fillRect(0, 0, 200, 200);
+                ctx.fillStyle = '#6c757d';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('图片加载失败', 100, 110);
+                this.src = canvas.toDataURL();
+            };
+
+            // 开始第一题
+            nextImage();
+        }
+
+        function restartTest() {
+            // 重置状态
+            currentIndex = 0;
+            practiceCount = 0;
+            correctCount = 0;
+            firstTryCorrectCount = 0;
+            attemptsLeft = 3;
+            isAnswered = false;
+            correctFormula = "";
+            testQuestions = [];
+            testResults = [];
+            questionStartTime = 0;
+            totalTestTime = 0;
+            currentQuestionTime = 0;
+            selectedTestCount = 0;
+            trainingMode = "";
+            wrongQuestions = [];
+            currentQuestionAttempts = [];
+            isPaused = false;
+            selectedFormulas = [];
+            timesPerFormula = 1;
+            customColorMode = "1";
+
+            // 清除计时器
+            if (testInterval) clearInterval(testInterval);
+
+            // 切换到开始界面
+            reportScreen.classList.add("hidden");
+            startScreen.classList.remove("hidden");
+
+            // 重置选项选择
+            document.querySelectorAll(".test-option").forEach(opt => opt.classList.remove("selected"));
+            document.querySelectorAll(".formula-option").forEach(opt => opt.classList.remove("selected"));
+            document.querySelectorAll(".color-option").forEach(opt => {
+                opt.classList.remove("selected");
+                if (opt.getAttribute("data-colors") === "1") {
+                    opt.classList.add("selected");
+                }
+            });
+            timesInput.value = 1;
+        }
+
+        // 添加键盘快捷键支持
+        document.addEventListener("keydown", function (event) {
+            if (event.key === " " || event.key === "Spacebar") {
+                // 空格键切换暂停/继续状态
+                if (!startScreen.classList.contains("hidden")) {
+                    startTest();
+                } else if (!testScreen.classList.contains("hidden")) {
+                    togglePause();
+                } else if (!reportScreen.classList.contains("hidden")) {
+                    restartTest();
+                }
+                event.preventDefault();
+            }
         });
-
-        // 水平对比
-        const avgTimeNum = parseFloat(averageTime);
-        let levelText = "";
-
-        if (avgTimeNum <= 0.8) {
-          levelText = "您的识别速度达到了世界级选手水平！";
-        } else if (avgTimeNum <= 1.2) {
-          levelText = "您的识别速度达到了Sub-10选手水平！";
-        } else if (avgTimeNum <= 1.8) {
-          levelText = "您的识别速度达到了Sub-15选手水平！";
-        } else if (avgTimeNum <= 3.0) {
-          levelText = "您的识别速度良好，继续练习可以进一步提升！";
-        } else {
-          levelText = "您的识别速度还有提升空间，多加练习会更好！";
-        }
-
-        levelComparisonElement.textContent = levelText;
-
-        // 显示或隐藏错题训练按钮
-        if (wrongQuestions.length > 0) {
-          wrongQuestionsTrainButton.style.display = "inline-block";
-        } else {
-          wrongQuestionsTrainButton.style.display = "none";
-        }
-      }
-
-      function startWrongQuestionsTrain() {
-        if (wrongQuestions.length === 0) {
-          alert("没有错题可以训练！");
-          return;
-        }
-
-        // 设置错题为测试题目并打乱顺序
-        testQuestions = [...wrongQuestions].sort(() => Math.random() - 0.5);
-        selectedTestCount = wrongQuestions.length;
-
-        // 切换到测试界面
-        reportScreen.classList.add("hidden");
-        testScreen.classList.remove("hidden");
-
-        // 重置测试状态
-        practiceCount = 0;
-        correctCount = 0;
-        firstTryCorrectCount = 0;
-        testResults = [];
-        totalTestTime = 0;
-        wrongQuestions = [];
-        currentQuestionAttempts = [];
-        isPaused = false;
-
-        // 开始第一题
-        nextImage();
-      }
-
-      function restartTest() {
-        // 重置状态
-        currentIndex = 0;
-        practiceCount = 0;
-        correctCount = 0;
-        firstTryCorrectCount = 0;
-        attemptsLeft = 3;
-        isAnswered = false;
-        correctFormula = "";
-        testQuestions = [];
-        testResults = [];
-        questionStartTime = 0;
-        totalTestTime = 0;
-        currentQuestionTime = 0;
-        selectedTestCount = 0;
-        is21TestMode = false;
-        wrongQuestions = [];
-        currentQuestionAttempts = [];
-        isPaused = false;
-
-        // 清除计时器
-        if (testInterval) clearInterval(testInterval);
-
-        // 切换到开始界面
-        reportScreen.classList.add("hidden");
-        startScreen.classList.remove("hidden");
-
-        // 重置选项选择
-        testOptions.forEach((opt) => opt.classList.remove("selected"));
-      }
-
-      // 添加键盘快捷键支持
-      document.addEventListener("keydown", function (event) {
-        if (event.key === " " || event.key === "Spacebar") {
-          // 空格键切换暂停/继续状态
-          if (!startScreen.classList.contains("hidden")) {
-            startTest();
-          } else if (!testScreen.classList.contains("hidden")) {
-            togglePause();
-          } else if (!reportScreen.classList.contains("hidden")) {
-            restartTest();
-          }
-          event.preventDefault();
-        }
-      });
     </script>
-  </body>
+</body>
 </html>
